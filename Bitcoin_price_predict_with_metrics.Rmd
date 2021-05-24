@@ -1,0 +1,89 @@
+---
+title: "Bitcoin Price Prediction"
+author: "Akul Suhail Malhotra"
+date: "5/24/2021"
+output: html_document
+---
+
+```{r}
+df = read.csv("/Users/akul/Desktop/Bitcoin/bitstampUSD_1-min_data_2012-01-01_to_2021-03-31.csv")
+attach(df)
+head(df)
+dim(df)
+```
+
+
+```{r}
+## EDA
+### How Bitcoin has changed over time 
+plot(Timestamp, Weighted_Price, col = "darkorange", main  = "Bitcoin Price Over Time", lwd = 1, type = 'l')
+```
+
+```{r}
+#Currency Volume - number of tokens or contracts traded within a certain period of time
+plot(Timestamp, Volume_.Currency., col = "darkblue", type = 'l', main = "Bitcoin Volume Over Time", lwd = 1)
+```
+
+```{r check for null values}
+colSums(is.na(df))
+```
+
+```{r change timestamps to date}
+df["Date"] = as.POSIXct(Timestamp, origin="1970-01-01")
+df
+```
+
+```{r drop na values}
+library(tidyverse)
+df_final = df%>% drop_na()
+dim(df_final)
+```
+
+
+```{r data split}
+model_df = df_final[,c(2,3,4,5,6,7,8)]
+model_df = as.data.frame(model_df)
+head(model_df)
+```
+```{r train test splitting}
+smp_size <- floor(0.75 * nrow(model_df))
+train.index <- sample(seq_len(nrow(model_df)), size = smp_size)
+train <- model_df[train.index,]
+test <- model_df[- train.index,]
+dim(train)
+dim(test)
+```
+```{r Linear Regression}
+attach(model_df)
+model = lm(Close~., data = model_df)
+summary(model)
+```
+```{r}
+par(mfrow = c(2,2))
+plot(model)
+```
+
+
+```{r}
+predictions = as.data.frame(predict(model, test))
+Actual = test$Close
+Actual_vs_predictions = cbind(predictions,Actual)
+Actual_vs_predictions
+```
+
+
+
+```{r}
+library(modelr)
+data.frame(
+  R2 = rsquare(model, data = test),
+  RMSE = rmse(model, data = test),
+  MAE = mae(model, data = test)
+)
+```
+
+
+
+
+`
+
